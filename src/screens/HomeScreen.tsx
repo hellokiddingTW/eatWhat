@@ -49,7 +49,7 @@ export function HomeScreen() {
     setLocationState(beginLocationRequest);
     const result = await requestCurrentLocation();
     setLocationState((current) => applyLocationResult(current, result));
-  }, []);
+  }, [requestCurrentLocation]);
 
   useEffect(() => {
     void refreshLocation();
