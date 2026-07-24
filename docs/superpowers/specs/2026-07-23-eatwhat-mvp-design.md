@@ -49,6 +49,17 @@ Map markers are not tappable. The map bottom action bar shows the active restaur
 
 The restaurant list is the main decision surface. Tapping a restaurant card changes the active restaurant and updates the map. It does not open Google Maps directly.
 
+### Map Implementation
+
+Native iOS and Android builds use `react-native-maps` with `PROVIDER_GOOGLE`. The native map is non-interactive in the MVP and automatically frames the user marker and active restaurant marker.
+
+Google Maps credentials are provided at build time through separate local environment variables:
+
+- `GOOGLE_MAPS_ANDROID_API_KEY`
+- `GOOGLE_MAPS_IOS_API_KEY`
+
+The keys must not be committed. Android and iOS keys use their respective application restrictions. The web preview keeps the existing non-Google map fallback because `react-native-maps` does not render on web.
+
 Restaurant cards display:
 
 - Restaurant name.
@@ -193,7 +204,6 @@ Each step should leave the app runnable.
 
 ## Open Questions
 
-- Which map library to use in Expo React Native.
 - Where to deploy the Hono API.
 - Exact Google Places API version and fields to request.
 - Whether closing time can be reliably derived from Google data for all results.
