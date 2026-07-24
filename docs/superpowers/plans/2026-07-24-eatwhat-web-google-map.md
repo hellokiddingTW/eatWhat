@@ -30,20 +30,20 @@
 - Produces: `requireGoogleMapsWebApiKey(value?: string): string`
 - Consumes: `process.env.EXPO_PUBLIC_GOOGLE_MAPS_WEB_API_KEY`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 assert.throws(() => requireGoogleMapsWebApiKey(undefined), /EXPO_PUBLIC_GOOGLE_MAPS_WEB_API_KEY/);
 assert.equal(requireGoogleMapsWebApiKey(' web-key '), 'web-key');
 ```
 
-- [ ] **Step 2: Verify the test fails**
+- [x] **Step 2: Verify the test fails**
 
 Run: `npm test -- src/config/googleMapsWebConfig.test.ts`
 
 Expected: FAIL because `googleMapsWebConfig.ts` does not exist.
 
-- [ ] **Step 3: Implement the helper**
+- [x] **Step 3: Implement the helper**
 
 ```ts
 export const requireGoogleMapsWebApiKey = (value?: string) => {
@@ -55,7 +55,7 @@ export const requireGoogleMapsWebApiKey = (value?: string) => {
 };
 ```
 
-- [ ] **Step 4: Verify the test passes**
+- [x] **Step 4: Verify the test passes**
 
 Run: `npm test -- src/config/googleMapsWebConfig.test.ts`
 
@@ -73,25 +73,25 @@ Expected: all web key tests pass.
 - Produces: `loadGoogleMapsWeb(apiKey): Promise<typeof google.maps>`
 - Consumes: `MapPreviewProps`, `buildMapRegion`, and the validated web key
 
-- [ ] **Step 1: Install official packages**
+- [x] **Step 1: Install official packages**
 
 Run: `npm install @googlemaps/js-api-loader && npm install --save-dev @types/google.maps`
 
 Expected: both packages are recorded in the root package files.
 
-- [ ] **Step 2: Implement the one-time loader**
+- [x] **Step 2: Implement the one-time loader**
 
 Call `setOptions({ key, v: 'weekly', language: 'zh-TW', region: 'TW', authReferrerPolicy: 'origin' })` once, then await `importLibrary('maps')` and `importLibrary('marker')`.
 
-- [ ] **Step 3: Implement the platform-specific component**
+- [x] **Step 3: Implement the platform-specific component**
 
 Create one `google.maps.Map` with all controls and gestures disabled. Draw one blue user circle marker and one red active-restaurant circle marker using non-clickable `google.maps.Marker` instances. Use `fitBounds` with bottom padding for two points and zoom `15` for a user-only map.
 
-- [ ] **Step 4: Preserve map action behavior**
+- [x] **Step 4: Preserve map action behavior**
 
 Render the existing restaurant name, distance, and `Google Maps ↗` action over the map. Missing key or loader failure renders `無法載入 Google Maps，請檢查 Web API key 設定`.
 
-- [ ] **Step 5: Run TypeScript and tests**
+- [x] **Step 5: Run TypeScript and tests**
 
 Run: `npx tsc --noEmit && npm test`
 
@@ -106,23 +106,23 @@ Expected: exit code 0 and all tests pass.
 - Consumes: a user-provided Maps JavaScript API key
 - Produces: visible Google map tiles at `http://localhost:8081`
 
-- [ ] **Step 1: Add the local variable entry**
+- [x] **Step 1: Add the local variable entry**
 
 ```dotenv
 EXPO_PUBLIC_GOOGLE_MAPS_WEB_API_KEY=
 ```
 
-- [ ] **Step 2: Verify the Web bundle**
+- [x] **Step 2: Verify the Web bundle**
 
 Run: `npx expo export --platform web --output-dir /private/tmp/eatwhat-web-google-map`
 
 Expected: Web bundle succeeds without importing `react-native-maps`.
 
-- [ ] **Step 3: Verify localhost behavior**
+- [x] **Step 3: Verify localhost behavior**
 
 Open `http://localhost:8081`, confirm real Google tiles are visible, exactly two markers render, and selecting a different restaurant updates the red marker and action bar.
 
-- [ ] **Step 4: Run full regression verification**
+- [x] **Step 4: Run full regression verification**
 
 Run: `npm test && npx tsc --noEmit && npm --prefix api test && npm --prefix api run typecheck`
 
