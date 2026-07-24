@@ -11,6 +11,7 @@ import type { SearchRadiusMeters } from '../types/restaurant';
 type DemoStatus = 'success' | 'loading' | 'empty' | 'permissionDenied' | 'error';
 
 const DEMO_STATUSES: DemoStatus[] = ['success', 'loading', 'empty', 'permissionDenied', 'error'];
+const DEMO_USER_LOCATION = { lat: 25.033, lng: 121.565 };
 
 export function HomeScreen() {
   const [selectedRadius, setSelectedRadius] = useState<SearchRadiusMeters>(3000);
@@ -94,7 +95,7 @@ export function HomeScreen() {
         </View>
 
         <RadiusSelector selectedRadius={selectedRadius} onSelectRadius={updateRadius} />
-        <MapPreview activeRestaurant={activeRestaurant} />
+        <MapPreview activeRestaurant={activeRestaurant} userLocation={DEMO_USER_LOCATION} />
 
         <View style={styles.demoBar}>
           {DEMO_STATUSES.map((status) => (

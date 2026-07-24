@@ -1,9 +1,5 @@
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
-import type { Restaurant } from '../types/restaurant';
-
-type MapPreviewProps = {
-  activeRestaurant?: Restaurant;
-};
+import type { MapPreviewProps } from './MapPreview.types';
 
 const formatDistance = (distanceMeters: number) => {
   if (distanceMeters < 1000) {
