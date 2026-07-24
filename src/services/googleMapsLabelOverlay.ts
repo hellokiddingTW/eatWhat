@@ -44,6 +44,7 @@ export const createGoogleMapsLabelOverlay = (
         maxWidth: '132px',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
+        boxSizing: 'border-box',
         border: '1px solid #d8e0e8',
         borderRadius: '6px',
         background: '#ffffff',
