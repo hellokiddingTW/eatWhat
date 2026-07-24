@@ -14,7 +14,7 @@ import { RadiusSelector } from '../components/RadiusSelector';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { StateMessage } from '../components/StateMessage';
 import { mockRestaurants } from '../data/mockRestaurants';
-import { requestCurrentLocation } from '../location/expoCurrentLocation';
+import { createExpoCurrentLocationRequester } from '../location/expoCurrentLocation';
 import {
   applyLocationResult,
   beginLocationRequest,
@@ -30,6 +30,10 @@ export function HomeScreen() {
   );
   const [locationState, setLocationState] = useState<LocationViewState>(
     INITIAL_LOCATION_STATE,
+  );
+  const requestCurrentLocation = useMemo(
+    () => createExpoCurrentLocationRequester(),
+    [],
   );
 
   const visibleRestaurants = useMemo(

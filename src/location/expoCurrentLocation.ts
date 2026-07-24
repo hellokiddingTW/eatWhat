@@ -12,5 +12,5 @@ const expoLocationClient: LocationClient = {
     }),
 };
 
-export const requestCurrentLocation =
+export const createExpoCurrentLocationRequester = () =>
   createCurrentLocationRequester(expoLocationClient);
