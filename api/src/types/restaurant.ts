@@ -23,4 +23,19 @@ export type NearbyRestaurantQuery = {
   lat: number;
   lng: number;
   radius: SearchRadiusMeters;
+  pageToken?: string;
 };
+
+export type NearbyRestaurantPage = {
+  restaurants: Restaurant[];
+  nextPageToken?: string;
+};
+
+export type RestaurantSearchOptions = {
+  signal?: AbortSignal;
+};
+
+export type RestaurantSearch = (
+  query: NearbyRestaurantQuery,
+  options?: RestaurantSearchOptions,
+) => Promise<NearbyRestaurantPage>;

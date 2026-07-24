@@ -37,7 +37,7 @@
 - Produces: `createCurrentLocationRequester(client?): () => Promise<CurrentLocationResult>`.
 - Produces: `CurrentLocationResult` with `ready`, `permissionDenied`, and `error` variants.
 
-- [ ] **Step 1: Install and configure foreground location**
+- [x] **Step 1: Install and configure foreground location**
 
 Run:
 
@@ -60,7 +60,7 @@ Update `app.config.js` so the plugin list includes:
 Keep `./plugins/withGoogleMaps` in the same plugin list. Do not configure
 background location.
 
-- [ ] **Step 2: Write failing location-service tests**
+- [x] **Step 2: Write failing location-service tests**
 
 Create `src/location/currentLocation.test.ts`:
 
@@ -161,7 +161,7 @@ describe('createCurrentLocationRequester', () => {
 });
 ```
 
-- [ ] **Step 3: Run the tests and verify RED**
+- [x] **Step 3: Run the tests and verify RED**
 
 Run:
 
@@ -171,7 +171,7 @@ npm test -- src/location/currentLocation.test.ts
 
 Expected: FAIL because `src/location/currentLocation.ts` does not exist.
 
-- [ ] **Step 4: Implement the location service**
+- [x] **Step 4: Implement the location service**
 
 Create `src/location/currentLocation.ts`:
 
@@ -243,7 +243,7 @@ export const createCurrentLocationRequester = (
 };
 ```
 
-- [ ] **Step 5: Verify GREEN and type safety**
+- [x] **Step 5: Verify GREEN and type safety**
 
 Run:
 
@@ -254,7 +254,7 @@ npx tsc --noEmit
 
 Expected: all location tests pass and TypeScript exits with code 0.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add package.json package-lock.json app.config.js src/location/currentLocation.ts src/location/currentLocation.test.ts
@@ -275,7 +275,7 @@ git commit -m "Add one-shot current location service"
 - Produces: `LocationViewState`, `beginLocationRequest()`, and `applyLocationResult()`.
 - Produces: a header refresh button and real permission/error retry states.
 
-- [ ] **Step 1: Write failing state-transition tests**
+- [x] **Step 1: Write failing state-transition tests**
 
 Create `src/location/locationViewState.test.ts`:
 
@@ -346,7 +346,7 @@ describe('location view state', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests and verify RED**
+- [x] **Step 2: Run the tests and verify RED**
 
 Run:
 
@@ -356,7 +356,7 @@ npm test -- src/location/locationViewState.test.ts
 
 Expected: FAIL because `src/location/locationViewState.ts` does not exist.
 
-- [ ] **Step 3: Implement the state transitions**
+- [x] **Step 3: Implement the state transitions**
 
 Create `src/location/locationViewState.ts`:
 
@@ -399,7 +399,7 @@ export const applyLocationResult = (
 };
 ```
 
-- [ ] **Step 4: Verify the state tests pass**
+- [x] **Step 4: Verify the state tests pass**
 
 Run:
 
@@ -409,7 +409,7 @@ npm test -- src/location/locationViewState.test.ts
 
 Expected: all state-transition tests pass.
 
-- [ ] **Step 5: Connect the state to `HomeScreen`**
+- [x] **Step 5: Connect the state to `HomeScreen`**
 
 In `src/screens/HomeScreen.tsx`:
 
@@ -462,7 +462,7 @@ Use these exact messages:
 />
 ```
 
-- [ ] **Step 6: Verify the full app tests and typecheck**
+- [x] **Step 6: Verify the full app tests and typecheck**
 
 Run:
 
@@ -473,7 +473,7 @@ npx tsc --noEmit
 
 Expected: all tests pass and TypeScript exits with code 0.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/location/locationViewState.ts src/location/locationViewState.test.ts src/screens/HomeScreen.tsx
@@ -497,7 +497,7 @@ git commit -m "Use current location on the home screen"
 - Produces: native `MapMarkerBubble` for custom marker children.
 - Produces: `createGoogleMapsLabelOverlay()` for Web DOM overlays.
 
-- [ ] **Step 1: Add the native bubble component**
+- [x] **Step 1: Add the native bubble component**
 
 Create `src/components/MapMarkerBubble.tsx` with props:
 
@@ -526,7 +526,7 @@ Use a white bubble, `#16202a` text, `maxWidth: 132`, `fontSize: 11`,
 `borderRadius: 6`, a subtle border/shadow, and an 18-pixel circular point with a
 white border.
 
-- [ ] **Step 2: Use native marker children**
+- [x] **Step 2: Use native marker children**
 
 Replace the two pin-color markers in `MapPreview.native.tsx` with:
 
@@ -559,7 +559,7 @@ Keying the restaurant marker by `activeRestaurant.id` ensures each active
 selection mounts fresh native marker content while keeping
 `tracksViewChanges={false}`.
 
-- [ ] **Step 3: Add the Web label overlay**
+- [x] **Step 3: Add the Web label overlay**
 
 Create `src/services/googleMapsLabelOverlay.ts`. Export:
 
@@ -662,7 +662,7 @@ export const createGoogleMapsLabelOverlay = (
 };
 ```
 
-- [ ] **Step 4: Expose `OverlayView` from the Google loader**
+- [x] **Step 4: Expose `OverlayView` from the Google loader**
 
 Extend `GoogleMapsWebLibraries` in `src/services/googleMapsWeb.ts`:
 
@@ -680,7 +680,7 @@ LatLng: coreLibrary.LatLng,
 
 Do not add another Google library request.
 
-- [ ] **Step 5: Synchronize Web markers and bubbles**
+- [x] **Step 5: Synchronize Web markers and bubbles**
 
 In `MapPreview.web.tsx`, keep the two existing circle markers. Add refs for two
 `GoogleMapsLabelOverlay` instances.
@@ -708,13 +708,13 @@ the component cleanup using `setMap(null)`.
 The DOM snapshot must expose the exact text `現在位置` and the active restaurant
 name within the map container.
 
-- [ ] **Step 6: Update the generic fallback preview**
+- [x] **Step 6: Update the generic fallback preview**
 
 In `MapPreview.tsx`, change the fixed user label from `你` to `現在位置` and
 style both fallback labels as white compact bubbles above their colored dots.
 This keeps unsupported platform resolution consistent with Web and native.
 
-- [ ] **Step 7: Verify types and all unit tests**
+- [x] **Step 7: Verify types and all unit tests**
 
 Run:
 
@@ -725,7 +725,7 @@ npx tsc --noEmit
 
 Expected: all tests pass and TypeScript exits with code 0.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/components/MapMarkerBubble.tsx src/components/MapPreview.native.tsx src/components/MapPreview.web.tsx src/components/MapPreview.tsx src/services/googleMapsLabelOverlay.ts src/services/googleMapsWeb.ts
