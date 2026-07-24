@@ -57,8 +57,11 @@ Google Maps credentials are provided at build time through separate local enviro
 
 - `GOOGLE_MAPS_ANDROID_API_KEY`
 - `GOOGLE_MAPS_IOS_API_KEY`
+- `EXPO_PUBLIC_GOOGLE_MAPS_WEB_API_KEY`
 
-The keys must not be committed. Android and iOS keys use their respective application restrictions. The web preview keeps the existing non-Google map fallback because `react-native-maps` does not render on web.
+The keys must not be committed. Android and iOS keys use their respective application restrictions. The web key is expected to be visible in browser code and must be restricted to approved HTTP referrers and the Maps JavaScript API.
+
+The web preview uses the official `@googlemaps/js-api-loader` package and Maps JavaScript API. It matches the native behavior: the map is non-interactive, displays only the user and active restaurant markers, and reframes both positions when the active card changes. Missing or rejected web credentials produce a clear map error state instead of the old simulated map.
 
 Restaurant cards display:
 
