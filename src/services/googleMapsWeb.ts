@@ -4,9 +4,11 @@ import { importLibrary, setOptions } from '@googlemaps/js-api-loader';
 import { createRetryableLoader } from './retryableLoader';
 
 export type GoogleMapsWebLibraries = {
+  LatLng: google.maps.CoreLibrary['LatLng'];
   LatLngBounds: google.maps.CoreLibrary['LatLngBounds'];
   Map: google.maps.MapsLibrary['Map'];
   Marker: google.maps.MarkerLibrary['Marker'];
+  OverlayView: google.maps.MapsLibrary['OverlayView'];
   SymbolPath: google.maps.CoreLibrary['SymbolPath'];
 };
 
@@ -22,6 +24,8 @@ const loadLibraries = createRetryableLoader(async () => {
   return {
     Map: mapsLibrary.Map,
     Marker: markerLibrary.Marker,
+    OverlayView: mapsLibrary.OverlayView,
+    LatLng: coreLibrary.LatLng,
     LatLngBounds: coreLibrary.LatLngBounds,
     SymbolPath: coreLibrary.SymbolPath,
   };

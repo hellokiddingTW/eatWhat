@@ -1,4 +1,6 @@
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { MapMarkerBubble } from './MapMarkerBubble';
+import { buildMapMarkerLabels } from './mapMarkerLabels';
 import type { MapPreviewProps } from './MapPreview.types';
 
 const formatDistance = (distanceMeters: number) => {
@@ -10,6 +12,8 @@ const formatDistance = (distanceMeters: number) => {
 };
 
 export function MapPreview({ activeRestaurant }: MapPreviewProps) {
+  const labels = buildMapMarkerLabels(activeRestaurant);
+
   const openGoogleMaps = () => {
     if (activeRestaurant) {
       void Linking.openURL(activeRestaurant.googleMapsUrl);
@@ -23,16 +27,15 @@ export function MapPreview({ activeRestaurant }: MapPreviewProps) {
       <View style={styles.route} />
 
       <View style={[styles.pin, styles.userPin]}>
-        <View style={[styles.pinDot, styles.userDot]} />
-        <Text style={styles.pinLabel}>你</Text>
+        <MapMarkerBubble color="#2563eb" label={labels.user} />
       </View>
 
       {activeRestaurant ? (
         <View style={[styles.pin, styles.restaurantPin]}>
-          <View style={[styles.pinDot, styles.restaurantDot]} />
-          <Text style={styles.pinLabel} numberOfLines={1}>
-            {activeRestaurant.name}
-          </Text>
+          <MapMarkerBubble
+            color="#ef4444"
+            label={labels.restaurant ?? activeRestaurant.name}
+          />
         </View>
       ) : null}
 
@@ -87,8 +90,6 @@ const styles = StyleSheet.create({
   pin: {
     position: 'absolute',
     alignItems: 'center',
-    gap: 5,
-    maxWidth: 112,
   },
   userPin: {
     left: 68,
@@ -97,29 +98,6 @@ const styles = StyleSheet.create({
   restaurantPin: {
     right: 54,
     top: 62,
-  },
-  pinDot: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 4,
-    borderColor: '#ffffff',
-    shadowColor: '#0f172a',
-    shadowOpacity: 0.28,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
-  },
-  userDot: {
-    backgroundColor: '#2563eb',
-  },
-  restaurantDot: {
-    backgroundColor: '#ef4444',
-  },
-  pinLabel: {
-    color: '#1d2a36',
-    fontSize: 11,
-    fontWeight: '800',
   },
   actionBar: {
     position: 'absolute',

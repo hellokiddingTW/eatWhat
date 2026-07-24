@@ -8,6 +8,11 @@ import {
   loadGoogleMapsWeb,
   type GoogleMapsWebLibraries,
 } from '../services/googleMapsWeb';
+import {
+  createGoogleMapsLabelOverlay,
+  type GoogleMapsLabelOverlay,
+} from '../services/googleMapsLabelOverlay';
+import { buildMapMarkerLabels } from './mapMarkerLabels';
 import type { MapPreviewProps } from './MapPreview.types';
 
 type MapLoadState = 'loading' | 'ready' | 'error';
@@ -37,8 +42,11 @@ export function MapPreview({ activeRestaurant, userLocation }: MapPreviewProps) 
   const mapRef = useRef<google.maps.Map | undefined>(undefined);
   const librariesRef = useRef<GoogleMapsWebLibraries | undefined>(undefined);
   const userMarkerRef = useRef<google.maps.Marker | undefined>(undefined);
+  const userLabelRef = useRef<GoogleMapsLabelOverlay | undefined>(undefined);
   const restaurantMarkerRef = useRef<google.maps.Marker | undefined>(undefined);
+  const restaurantLabelRef = useRef<GoogleMapsLabelOverlay | undefined>(undefined);
   const [loadState, setLoadState] = useState<MapLoadState>('loading');
+  const labels = buildMapMarkerLabels(activeRestaurant);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,7 +92,9 @@ export function MapPreview({ activeRestaurant, userLocation }: MapPreviewProps) 
     return () => {
       cancelled = true;
       userMarkerRef.current?.setMap(null);
+      userLabelRef.current?.setMap(null);
       restaurantMarkerRef.current?.setMap(null);
+      restaurantLabelRef.current?.setMap(null);
     };
   }, []);
 
@@ -115,9 +125,21 @@ export function MapPreview({ activeRestaurant, userLocation }: MapPreviewProps) 
       zIndex: 2,
     });
     userMarkerRef.current.setPosition(userCoordinate);
+    userLabelRef.current ??= createGoogleMapsLabelOverlay(
+      libraries.OverlayView,
+      libraries.LatLng,
+      {
+        label: labels.user,
+        map,
+        position: userCoordinate,
+      },
+    );
+    userLabelRef.current.setPosition(userCoordinate);
 
     restaurantMarkerRef.current?.setMap(null);
     restaurantMarkerRef.current = undefined;
+    restaurantLabelRef.current?.setMap(null);
+    restaurantLabelRef.current = undefined;
 
     if (!activeRestaurant) {
       map.setCenter(userCoordinate);
@@ -142,12 +164,21 @@ export function MapPreview({ activeRestaurant, userLocation }: MapPreviewProps) 
       title: activeRestaurant.name,
       zIndex: 3,
     });
+    restaurantLabelRef.current = createGoogleMapsLabelOverlay(
+      libraries.OverlayView,
+      libraries.LatLng,
+      {
+        label: labels.restaurant ?? activeRestaurant.name,
+        map,
+        position: restaurantCoordinate,
+      },
+    );
 
     const bounds = new libraries.LatLngBounds();
     bounds.extend(userCoordinate);
     bounds.extend(restaurantCoordinate);
     map.fitBounds(bounds, {
-      top: 24,
+      top: 52,
       right: 24,
       bottom: 72,
       left: 24,

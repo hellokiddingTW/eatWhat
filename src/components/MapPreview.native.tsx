@@ -1,6 +1,8 @@
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { MapMarkerBubble } from './MapMarkerBubble';
 import { buildMapRegion, toMapCoordinate } from './mapGeometry';
+import { buildMapMarkerLabels } from './mapMarkerLabels';
 import type { MapPreviewProps } from './MapPreview.types';
 
 const formatDistance = (distanceMeters: number) => {
@@ -14,6 +16,7 @@ const formatDistance = (distanceMeters: number) => {
 export function MapPreview({ activeRestaurant, userLocation }: MapPreviewProps) {
   const restaurantLocation = activeRestaurant?.location;
   const region = buildMapRegion(userLocation, restaurantLocation);
+  const labels = buildMapMarkerLabels(activeRestaurant);
 
   const openGoogleMaps = () => {
     if (activeRestaurant) {
@@ -35,16 +38,26 @@ export function MapPreview({ activeRestaurant, userLocation }: MapPreviewProps) 
         zoomEnabled={false}
       >
         <Marker
+          anchor={{ x: 0.5, y: 1 }}
           coordinate={toMapCoordinate(userLocation)}
-          pinColor="#2563eb"
           tappable={false}
-        />
+          tracksViewChanges={false}
+        >
+          <MapMarkerBubble color="#2563eb" label={labels.user} />
+        </Marker>
         {restaurantLocation ? (
           <Marker
+            anchor={{ x: 0.5, y: 1 }}
             coordinate={toMapCoordinate(restaurantLocation)}
-            pinColor="#ef4444"
+            key={activeRestaurant.id}
             tappable={false}
-          />
+            tracksViewChanges={false}
+          >
+            <MapMarkerBubble
+              color="#ef4444"
+              label={labels.restaurant ?? activeRestaurant.name}
+            />
+          </Marker>
         ) : null}
       </MapView>
 
