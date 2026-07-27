@@ -44,3 +44,6 @@ yarn-error.*
 
 # local agent execution state
 .superpowers/
+
+# Vercel local project links
+.vercel/

@@ -212,4 +212,13 @@ describe('EatWhat API', () => {
     assert.equal(otherClientResponse.status, 200);
     assert.equal(searchCount, 2);
   });
+
+  it('exports the production Hono app as the default export', async () => {
+    const appModule = await import('./app.js');
+
+    assert.equal(appModule.default, appModule.app);
+    const response = await appModule.default.request('/health');
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { ok: true });
+  });
 });

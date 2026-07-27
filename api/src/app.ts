@@ -120,3 +120,5 @@ export const app = createApp({
     process.env.MAX_SEARCH_REQUESTS_PER_MINUTE,
   ),
 });
+
+export default app;
