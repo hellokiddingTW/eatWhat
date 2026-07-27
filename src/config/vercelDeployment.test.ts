@@ -31,3 +31,15 @@ test('ignores local Vercel project metadata', async () => {
 
   assert.match(gitignore, /^\.vercel\/$/m);
 });
+
+test('isolates the API project from Expo web build overrides', async () => {
+  const apiVercelConfig = JSON.parse(
+    await readFile(new URL('../../api/vercel.json', import.meta.url), 'utf8'),
+  ) as {
+    buildCommand?: string | null;
+    outputDirectory?: string | null;
+  };
+
+  assert.equal(apiVercelConfig.buildCommand, null);
+  assert.equal(apiVercelConfig.outputDirectory, null);
+});
