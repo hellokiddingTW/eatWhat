@@ -43,3 +43,21 @@ test('isolates the API project from Expo web build overrides', async () => {
   assert.equal(apiVercelConfig.buildCommand, null);
   assert.equal(apiVercelConfig.outputDirectory, null);
 });
+
+test('uses the Vercel-compatible TypeScript version for the API build', async () => {
+  const rootPackage = JSON.parse(
+    await readFile(new URL('../../package.json', import.meta.url), 'utf8'),
+  ) as {
+    devDependencies?: Record<string, string>;
+  };
+  const apiPackage = JSON.parse(
+    await readFile(new URL('../../api/package.json', import.meta.url), 'utf8'),
+  ) as {
+    devDependencies?: Record<string, string>;
+  };
+
+  assert.equal(
+    apiPackage.devDependencies?.typescript,
+    rootPackage.devDependencies?.typescript,
+  );
+});
