@@ -17,7 +17,7 @@ export const mergeRestaurantPages = (
       seenIds.add(id);
       return true;
     }),
-  ];
+  ].sort((a, b) => a.distanceMeters - b.distanceMeters);
 };
 
 export const canLoadRestaurantPage = (

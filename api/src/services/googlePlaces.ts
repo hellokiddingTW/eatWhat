@@ -17,8 +17,22 @@ const GOOGLE_PLACES_FIELD_MASK = [
   'places.primaryTypeDisplayName',
   'places.types',
   'places.googleMapsUri',
+  'places.currentOpeningHours',
+  'places.timeZone',
   'nextPageToken',
 ].join(',');
+
+type GoogleOpeningHours = {
+  nextCloseTime?: string;
+  periods?: {
+    open?: {
+      day?: number;
+      hour?: number;
+      minute?: number;
+    };
+    close?: unknown;
+  }[];
+};
 
 type GooglePlace = {
   id?: string;
@@ -36,6 +50,10 @@ type GooglePlace = {
   };
   types?: string[];
   googleMapsUri?: string;
+  currentOpeningHours?: GoogleOpeningHours;
+  timeZone?: {
+    id?: string;
+  };
 };
 
 type GoogleTextSearchResponse = {
@@ -110,6 +128,43 @@ const buildGoogleMapsUrl = (id: string, name: string) => {
   return url.toString();
 };
 
+const getClosingTimeText = ({
+  currentOpeningHours,
+  timeZone,
+}: GooglePlace) => {
+  const nextCloseTime = currentOpeningHours?.nextCloseTime?.trim();
+  const timeZoneId = timeZone?.id?.trim();
+
+  if (nextCloseTime && timeZoneId) {
+    const closingDate = new Date(nextCloseTime);
+
+    if (!Number.isNaN(closingDate.getTime())) {
+      try {
+        const closingTime = new Intl.DateTimeFormat('en-GB', {
+          timeZone: timeZoneId,
+          hour: '2-digit',
+          minute: '2-digit',
+          hourCycle: 'h23',
+        }).format(closingDate);
+
+        return `營業到 ${closingTime}`;
+      } catch {
+        // Ignore malformed time zones from upstream data.
+      }
+    }
+  }
+
+  const isAlwaysOpen = currentOpeningHours?.periods?.some(
+    ({ open, close }) =>
+      !close &&
+      open?.day === 0 &&
+      open.hour === 0 &&
+      open.minute === 0,
+  );
+
+  return isAlwaysOpen ? '24 小時營業' : undefined;
+};
+
 const normalizePlace = (
   place: GooglePlace,
   query: NearbyRestaurantQuery,
@@ -145,6 +200,7 @@ const normalizePlace = (
   const cuisineType = place.primaryTypeDisplayName?.text?.trim();
   const googleMapsUrl =
     place.googleMapsUri?.trim() || buildGoogleMapsUrl(id, name);
+  const closingTimeText = getClosingTimeText(place);
 
   return {
     id,
@@ -153,6 +209,7 @@ const normalizePlace = (
     isOpenNow: true,
     ...(address ? { address } : {}),
     ...(cuisineType ? { cuisineTypes: [cuisineType] } : {}),
+    ...(closingTimeText ? { closingTimeText } : {}),
     location,
     googleMapsUrl,
   };

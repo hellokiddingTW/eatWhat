@@ -38,6 +38,16 @@ describe('restaurant pagination', () => {
     );
   });
 
+  it('sorts the complete merged list by distance', () => {
+    const current = [restaurant('a', 500), restaurant('b', 900)];
+    const incoming = [restaurant('c', 200), restaurant('d', 700)];
+
+    assert.deepEqual(
+      mergeRestaurantPages(current, incoming).map(({ id }) => id),
+      ['c', 'a', 'd', 'b'],
+    );
+  });
+
   it('loads only when a token exists and fewer than three pages were loaded', () => {
     assert.equal(canLoadRestaurantPage(1, 'next-token'), true);
     assert.equal(canLoadRestaurantPage(2, 'next-token'), true);

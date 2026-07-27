@@ -9,7 +9,7 @@ const requestQuery = {
 };
 
 describe('Google Places restaurant search', () => {
-  it('requests open restaurants with Pro fields and an enclosing rectangle', async () => {
+  it('requests open restaurants with Enterprise hours fields and an enclosing rectangle', async () => {
     let requestUrl = '';
     let requestInit: RequestInit | undefined;
     const fetchImpl: typeof fetch = async (input, init) => {
@@ -48,6 +48,8 @@ describe('Google Places restaurant search', () => {
         'places.primaryTypeDisplayName',
         'places.types',
         'places.googleMapsUri',
+        'places.currentOpeningHours',
+        'places.timeZone',
         'nextPageToken',
       ].join(','),
     );
@@ -102,6 +104,14 @@ describe('Google Places restaurant search', () => {
             primaryTypeDisplayName: { text: '台灣餐廳' },
             formattedAddress: '台北市較遠路 2 號',
             googleMapsUri: 'https://maps.google.com/farther',
+            currentOpeningHours: {
+              openNow: true,
+              periods: [
+                {
+                  open: { day: 0, hour: 0, minute: 0 },
+                },
+              ],
+            },
           },
           {
             id: 'outside',
@@ -114,6 +124,13 @@ describe('Google Places restaurant search', () => {
             displayName: { text: '最近餐廳' },
             location: { latitude: 25.034, longitude: 121.565 },
             primaryType: 'restaurant',
+            currentOpeningHours: {
+              openNow: true,
+              nextCloseTime: '2026-07-27T15:00:00Z',
+            },
+            timeZone: {
+              id: 'Asia/Taipei',
+            },
           },
           {
             id: 'malformed',
@@ -144,6 +161,7 @@ describe('Google Places restaurant search', () => {
       name: '最近餐廳',
       distanceMeters: page.restaurants[0].distanceMeters,
       isOpenNow: true,
+      closingTimeText: '營業到 23:00',
       location: {
         lat: 25.034,
         lng: 121.565,
@@ -158,6 +176,7 @@ describe('Google Places restaurant search', () => {
       isOpenNow: true,
       address: '台北市較遠路 2 號',
       cuisineTypes: ['台灣餐廳'],
+      closingTimeText: '24 小時營業',
       location: {
         lat: 25.05,
         lng: 121.565,
