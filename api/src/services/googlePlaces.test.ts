@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { createGooglePlacesRestaurantSearch } from './googlePlaces.js';
+import {
+  createGooglePlacesRestaurantSearch,
+  createGoogleTextRestaurantSearch,
+} from './googlePlaces.js';
 
 const requestQuery = {
   lat: 25.033,
@@ -17,18 +20,14 @@ describe('Google Places restaurant search', () => {
       requestInit = init;
       return Response.json({
         places: [],
-        nextPageToken: 'next-page',
       });
     };
-    const search = createGooglePlacesRestaurantSearch({
+    const search = createGoogleTextRestaurantSearch({
       apiKey: 'server-key',
       fetchImpl,
     });
 
-    const page = await search({
-      ...requestQuery,
-      pageToken: 'google-page-token',
-    });
+    const page = await search(requestQuery);
 
     assert.equal(
       requestUrl,
@@ -50,7 +49,6 @@ describe('Google Places restaurant search', () => {
         'places.googleMapsUri',
         'places.currentOpeningHours',
         'places.timeZone',
-        'nextPageToken',
       ].join(','),
     );
 
@@ -65,7 +63,6 @@ describe('Google Places restaurant search', () => {
         rankPreference: body.rankPreference,
         languageCode: body.languageCode,
         regionCode: body.regionCode,
-        pageToken: body.pageToken,
       },
       {
         textQuery: 'restaurants',
@@ -76,7 +73,6 @@ describe('Google Places restaurant search', () => {
         rankPreference: 'DISTANCE',
         languageCode: 'zh-TW',
         regionCode: 'TW',
-        pageToken: 'google-page-token',
       },
     );
 
@@ -89,7 +85,6 @@ describe('Google Places restaurant search', () => {
     assert.ok(Math.abs(rectangle.high.latitude - 25.05998) < 0.0001);
     assert.deepEqual(page, {
       restaurants: [],
-      nextPageToken: 'next-page',
     });
   });
 
@@ -102,6 +97,7 @@ describe('Google Places restaurant search', () => {
             displayName: { text: '較遠餐廳' },
             location: { latitude: 25.05, longitude: 121.565 },
             primaryTypeDisplayName: { text: '台灣餐廳' },
+            types: ['restaurant'],
             formattedAddress: '台北市較遠路 2 號',
             googleMapsUri: 'https://maps.google.com/farther',
             currentOpeningHours: {
@@ -117,13 +113,18 @@ describe('Google Places restaurant search', () => {
             id: 'outside',
             displayName: { text: '超出範圍' },
             location: { latitude: 25.08, longitude: 121.565 },
+            types: ['restaurant'],
             googleMapsUri: 'https://maps.google.com/outside',
+            currentOpeningHours: {
+              openNow: true,
+            },
           },
           {
             id: 'nearer',
             displayName: { text: '最近餐廳' },
             location: { latitude: 25.034, longitude: 121.565 },
             primaryType: 'restaurant',
+            types: ['restaurant'],
             currentOpeningHours: {
               openNow: true,
               nextCloseTime: '2026-07-27T15:00:00Z',
@@ -136,10 +137,14 @@ describe('Google Places restaurant search', () => {
             id: 'malformed',
             displayName: { text: '' },
             location: { latitude: 25.033, longitude: 121.565 },
+            types: ['restaurant'],
+            currentOpeningHours: {
+              openNow: true,
+            },
           },
         ],
       });
-    const search = createGooglePlacesRestaurantSearch({
+    const search = createGoogleTextRestaurantSearch({
       apiKey: 'server-key',
       fetchImpl,
     });
@@ -191,7 +196,7 @@ describe('Google Places restaurant search', () => {
       body = JSON.parse(String(init?.body));
       return Response.json({ places: [] });
     };
-    const search = createGooglePlacesRestaurantSearch({
+    const search = createGoogleTextRestaurantSearch({
       apiKey: 'server-key',
       fetchImpl,
     });
@@ -207,7 +212,7 @@ describe('Google Places restaurant search', () => {
       receivedSignal = init?.signal;
       return Response.json({ places: [] });
     };
-    const search = createGooglePlacesRestaurantSearch({
+    const search = createGoogleTextRestaurantSearch({
       apiKey: 'server-key',
       fetchImpl,
     });
@@ -220,7 +225,7 @@ describe('Google Places restaurant search', () => {
 
   it('rejects a missing server API key without making a request', async () => {
     let requested = false;
-    const search = createGooglePlacesRestaurantSearch({
+    const search = createGoogleTextRestaurantSearch({
       apiKey: '   ',
       fetchImpl: async () => {
         requested = true;
@@ -233,7 +238,7 @@ describe('Google Places restaurant search', () => {
   });
 
   it('includes the upstream status when Google rejects the request', async () => {
-    const search = createGooglePlacesRestaurantSearch({
+    const search = createGoogleTextRestaurantSearch({
       apiKey: 'server-key',
       fetchImpl: async () =>
         Response.json(
@@ -247,5 +252,44 @@ describe('Google Places restaurant search', () => {
     });
 
     await assert.rejects(search(requestQuery), /Google Places request failed \(429\)/);
+  });
+
+  it('uses Nearby Search before one Text Search fallback', async () => {
+    const requestedPaths: string[] = [];
+    const fetchImpl: typeof fetch = async (input) => {
+      const path = new URL(String(input)).pathname;
+      requestedPaths.push(path);
+
+      if (path.endsWith('searchNearby')) {
+        return Response.json({
+          places: [
+            {
+              id: 'banxin-77',
+              displayName: { text: '板新77早午餐' },
+              location: {
+                latitude: requestQuery.lat,
+                longitude: requestQuery.lng,
+              },
+              types: ['brunch_restaurant', 'restaurant'],
+              currentOpeningHours: { openNow: true },
+            },
+          ],
+        });
+      }
+
+      return Response.json({ places: [] });
+    };
+    const search = createGooglePlacesRestaurantSearch({
+      apiKey: 'server-key',
+      fetchImpl,
+    });
+
+    const result = await search(requestQuery);
+
+    assert.deepEqual(requestedPaths, [
+      '/v1/places:searchNearby',
+      '/v1/places:searchText',
+    ]);
+    assert.equal(result.restaurants[0]?.id, 'banxin-77');
   });
 });

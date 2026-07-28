@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Restaurant } from '../types/restaurant';
-import { fetchNearbyRestaurantPage } from './restaurantsApi';
+import { fetchNearbyRestaurants } from './restaurantsApi';
 
 const sampleRestaurant: Restaurant = {
   id: 'place-1',
@@ -18,22 +18,18 @@ const sampleRestaurant: Restaurant = {
 };
 
 describe('restaurants API client', () => {
-  it('requests a nearby page with encoded coordinates, radius, and page token', async () => {
+  it('requests one nearby result with coordinates and radius', async () => {
     let requestedUrl = '';
     const fetchImpl: typeof fetch = async (input) => {
       requestedUrl = String(input);
-      return Response.json({
-        restaurants: [sampleRestaurant],
-        nextPageToken: 'next-page',
-      });
+      return Response.json({ restaurants: [sampleRestaurant] });
     };
 
-    const page = await fetchNearbyRestaurantPage(
+    const result = await fetchNearbyRestaurants(
       {
         lat: 25.033,
         lng: 121.565,
         radius: 3000,
-        pageToken: 'token with spaces',
       },
       {
         baseUrl: 'http://localhost:8787/',
@@ -47,33 +43,10 @@ describe('restaurants API client', () => {
     assert.equal(url.searchParams.get('lat'), '25.033');
     assert.equal(url.searchParams.get('lng'), '121.565');
     assert.equal(url.searchParams.get('radius'), '3000');
-    assert.equal(url.searchParams.get('pageToken'), 'token with spaces');
-    assert.deepEqual(page, {
+    assert.equal(url.searchParams.has('pageToken'), false);
+    assert.deepEqual(result, {
       restaurants: [sampleRestaurant],
-      nextPageToken: 'next-page',
     });
-  });
-
-  it('omits the page token from a first-page request', async () => {
-    let requestedUrl = '';
-    const fetchImpl: typeof fetch = async (input) => {
-      requestedUrl = String(input);
-      return Response.json({ restaurants: [] });
-    };
-
-    await fetchNearbyRestaurantPage(
-      {
-        lat: 25.033,
-        lng: 121.565,
-        radius: 5000,
-      },
-      {
-        baseUrl: 'http://localhost:8787',
-        fetchImpl,
-      },
-    );
-
-    assert.equal(new URL(requestedUrl).searchParams.has('pageToken'), false);
   });
 
   it('forwards an abort signal to the Hono request', async () => {
@@ -84,7 +57,7 @@ describe('restaurants API client', () => {
     };
     const controller = new AbortController();
 
-    await fetchNearbyRestaurantPage(
+    await fetchNearbyRestaurants(
       {
         lat: 25.033,
         lng: 121.565,
@@ -112,7 +85,7 @@ describe('restaurants API client', () => {
       );
 
     await assert.rejects(
-      fetchNearbyRestaurantPage(
+      fetchNearbyRestaurants(
         {
           lat: 25.033,
           lng: 121.565,
@@ -131,7 +104,7 @@ describe('restaurants API client', () => {
     const fetchImpl: typeof fetch = async () => Response.json({ restaurants: null });
 
     await assert.rejects(
-      fetchNearbyRestaurantPage(
+      fetchNearbyRestaurants(
         {
           lat: 25.033,
           lng: 121.565,

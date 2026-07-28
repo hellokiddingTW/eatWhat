@@ -9,8 +9,6 @@ import {
 } from 'react';
 import {
   ActivityIndicator,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -29,12 +27,11 @@ import {
   INITIAL_LOCATION_STATE,
   type LocationViewState,
 } from '../location/locationViewState';
-import { canLoadRestaurantPage } from '../services/restaurantPages';
 import {
   INITIAL_RESTAURANT_SEARCH_STATE,
   reduceRestaurantSearchState,
 } from '../services/restaurantSearchState';
-import { fetchNearbyRestaurantPage } from '../services/restaurantsApi';
+import { fetchNearbyRestaurants } from '../services/restaurantsApi';
 import type { SearchRadiusMeters } from '../types/restaurant';
 
 const SEARCH_DEBOUNCE_MS = 200;
@@ -53,11 +50,6 @@ export function HomeScreen() {
     INITIAL_LOCATION_STATE,
   );
   const searchRequestIdRef = useRef(0);
-  const loadMoreInFlightRef = useRef(false);
-  const lastRequestedPageTokenRef = useRef<string | undefined>(undefined);
-  const loadMoreAbortControllerRef = useRef<AbortController | undefined>(
-    undefined,
-  );
   const requestCurrentLocation = useMemo(
     () => createExpoCurrentLocationRequester(),
     [],
@@ -88,16 +80,12 @@ export function HomeScreen() {
 
     const requestId = searchRequestIdRef.current + 1;
     searchRequestIdRef.current = requestId;
-    loadMoreInFlightRef.current = false;
-    lastRequestedPageTokenRef.current = undefined;
-    loadMoreAbortControllerRef.current?.abort();
-    loadMoreAbortControllerRef.current = undefined;
     dispatchSearch({ type: 'searchStarted' });
     setActiveRestaurantId(undefined);
 
     const abortController = new AbortController();
     const timeout = setTimeout(() => {
-      void fetchNearbyRestaurantPage(
+      void fetchNearbyRestaurants(
         {
           lat: locationState.coordinate.lat,
           lng: locationState.coordinate.lng,
@@ -107,12 +95,12 @@ export function HomeScreen() {
           signal: abortController.signal,
         },
       )
-        .then((page) => {
+        .then((result) => {
           if (
             !abortController.signal.aborted &&
             searchRequestIdRef.current === requestId
           ) {
-            dispatchSearch({ type: 'firstPageLoaded', page });
+            dispatchSearch({ type: 'searchLoaded', result });
           }
         })
         .catch(() => {
@@ -120,7 +108,7 @@ export function HomeScreen() {
             !abortController.signal.aborted &&
             searchRequestIdRef.current === requestId
           ) {
-            dispatchSearch({ type: 'firstPageFailed' });
+            dispatchSearch({ type: 'searchFailed' });
           }
         });
     }, SEARCH_DEBOUNCE_MS);
@@ -139,89 +127,6 @@ export function HomeScreen() {
   const updateRadius = (radius: SearchRadiusMeters) => {
     setSelectedRadius(radius);
     setActiveRestaurantId(undefined);
-  };
-
-  const loadNextPage = useCallback(async (isManualRetry = false) => {
-    if (
-      locationState.status !== 'ready' ||
-      loadMoreInFlightRef.current ||
-      !canLoadRestaurantPage(
-        searchState.pagesLoaded,
-        searchState.nextPageToken,
-      )
-    ) {
-      return;
-    }
-
-    const pageToken = searchState.nextPageToken;
-    if (!pageToken) {
-      return;
-    }
-
-    if (
-      !isManualRetry &&
-      lastRequestedPageTokenRef.current === pageToken
-    ) {
-      return;
-    }
-
-    const requestId = searchRequestIdRef.current;
-    const abortController = new AbortController();
-    loadMoreInFlightRef.current = true;
-    lastRequestedPageTokenRef.current = pageToken;
-    loadMoreAbortControllerRef.current = abortController;
-    dispatchSearch({ type: 'nextPageStarted' });
-
-    try {
-      const page = await fetchNearbyRestaurantPage(
-        {
-          lat: locationState.coordinate.lat,
-          lng: locationState.coordinate.lng,
-          radius: selectedRadius,
-          pageToken,
-        },
-        {
-          signal: abortController.signal,
-        },
-      );
-
-      if (
-        !abortController.signal.aborted &&
-        searchRequestIdRef.current === requestId
-      ) {
-        dispatchSearch({ type: 'nextPageLoaded', page });
-      }
-    } catch {
-      if (
-        !abortController.signal.aborted &&
-        searchRequestIdRef.current === requestId
-      ) {
-        dispatchSearch({ type: 'nextPageFailed' });
-      }
-    } finally {
-      if (loadMoreAbortControllerRef.current === abortController) {
-        loadMoreAbortControllerRef.current = undefined;
-        loadMoreInFlightRef.current = false;
-      }
-    }
-  }, [
-    locationState,
-    searchState.nextPageToken,
-    searchState.pagesLoaded,
-    selectedRadius,
-  ]);
-
-  const handleScroll = ({
-    nativeEvent,
-  }: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { contentOffset, contentSize, layoutMeasurement } = nativeEvent;
-    const isNearEnd =
-      contentOffset.y > 0 &&
-      layoutMeasurement.height + contentOffset.y >= contentSize.height - 320;
-
-    if (isNearEnd) {
-      void loadNextPage();
-    }
   };
 
   const renderRestaurants = () => {
@@ -256,21 +161,6 @@ export function HomeScreen() {
             onPress={() => setActiveRestaurantId(restaurant.id)}
           />
         ))}
-        {searchState.isLoadingMore ? (
-          <View style={styles.paginationStatus}>
-            <ActivityIndicator color="#132235" size="small" />
-            <Text style={styles.paginationText}>正在載入更多餐廳...</Text>
-          </View>
-        ) : null}
-        {searchState.loadMoreFailed ? (
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => void loadNextPage(true)}
-            style={styles.paginationRetry}
-          >
-            <Text style={styles.paginationRetryText}>重新載入更多餐廳</Text>
-          </Pressable>
-        ) : null}
       </View>
     );
   };
@@ -302,11 +192,7 @@ export function HomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="dark" />
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        onScroll={handleScroll}
-        scrollEventThrottle={200}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <View>
             <Text style={styles.title}>附近還開著</Text>
@@ -423,31 +309,5 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: 10,
-  },
-  paginationStatus: {
-    minHeight: 48,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  paginationText: {
-    color: '#627181',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  paginationRetry: {
-    minHeight: 42,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#d8e0e8',
-    backgroundColor: '#ffffff',
-  },
-  paginationRetryText: {
-    color: '#132235',
-    fontSize: 13,
-    fontWeight: '800',
   },
 });

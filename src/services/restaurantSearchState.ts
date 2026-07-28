@@ -1,30 +1,19 @@
 import type { Restaurant } from '../types/restaurant';
-import type { NearbyRestaurantPage } from './restaurantsApi';
-import { mergeRestaurantPages } from './restaurantPages';
+import type { NearbyRestaurantResult } from './restaurantsApi';
 
 export type RestaurantSearchState = {
   status: 'idle' | 'loading' | 'ready' | 'error';
   restaurants: Restaurant[];
-  nextPageToken?: string;
-  pagesLoaded: number;
-  isLoadingMore: boolean;
-  loadMoreFailed: boolean;
 };
 
 type RestaurantSearchAction =
   | { type: 'searchStarted' }
-  | { type: 'firstPageLoaded'; page: NearbyRestaurantPage }
-  | { type: 'firstPageFailed' }
-  | { type: 'nextPageStarted' }
-  | { type: 'nextPageLoaded'; page: NearbyRestaurantPage }
-  | { type: 'nextPageFailed' };
+  | { type: 'searchLoaded'; result: NearbyRestaurantResult }
+  | { type: 'searchFailed' };
 
 export const INITIAL_RESTAURANT_SEARCH_STATE: RestaurantSearchState = {
   status: 'idle',
   restaurants: [],
-  pagesLoaded: 0,
-  isLoadingMore: false,
-  loadMoreFailed: false,
 };
 
 export const reduceRestaurantSearchState = (
@@ -34,50 +23,18 @@ export const reduceRestaurantSearchState = (
   switch (action.type) {
     case 'searchStarted':
       return {
-        ...INITIAL_RESTAURANT_SEARCH_STATE,
         status: 'loading',
+        restaurants: [],
       };
-    case 'firstPageLoaded':
+    case 'searchLoaded':
       return {
         status: 'ready',
-        restaurants: action.page.restaurants,
-        ...(action.page.nextPageToken
-          ? { nextPageToken: action.page.nextPageToken }
-          : {}),
-        pagesLoaded: 1,
-        isLoadingMore: false,
-        loadMoreFailed: false,
+        restaurants: action.result.restaurants,
       };
-    case 'firstPageFailed':
+    case 'searchFailed':
       return {
-        ...INITIAL_RESTAURANT_SEARCH_STATE,
         status: 'error',
-      };
-    case 'nextPageStarted':
-      return {
-        ...state,
-        isLoadingMore: true,
-        loadMoreFailed: false,
-      };
-    case 'nextPageLoaded':
-      return {
-        status: 'ready',
-        restaurants: mergeRestaurantPages(
-          state.restaurants,
-          action.page.restaurants,
-        ),
-        ...(action.page.nextPageToken
-          ? { nextPageToken: action.page.nextPageToken }
-          : {}),
-        pagesLoaded: state.pagesLoaded + 1,
-        isLoadingMore: false,
-        loadMoreFailed: false,
-      };
-    case 'nextPageFailed':
-      return {
-        ...state,
-        isLoadingMore: false,
-        loadMoreFailed: true,
+        restaurants: [],
       };
   }
 };

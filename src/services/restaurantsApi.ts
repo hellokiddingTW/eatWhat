@@ -4,19 +4,17 @@ import type {
   SearchRadiusMeters,
 } from '../types/restaurant';
 
-export type NearbyRestaurantPage = {
+export type NearbyRestaurantResult = {
   restaurants: Restaurant[];
-  nextPageToken?: string;
 };
 
-type NearbyRestaurantPageQuery = {
+type NearbyRestaurantQuery = {
   lat: number;
   lng: number;
   radius: SearchRadiusMeters;
-  pageToken?: string;
 };
 
-type FetchNearbyRestaurantPageOptions = {
+type FetchNearbyRestaurantsOptions = {
   baseUrl?: string;
   fetchImpl?: typeof fetch;
   signal?: AbortSignal;
@@ -28,10 +26,10 @@ type ApiErrorBody = {
   };
 };
 
-export async function fetchNearbyRestaurantPage(
-  query: NearbyRestaurantPageQuery,
-  options: FetchNearbyRestaurantPageOptions = {},
-): Promise<NearbyRestaurantPage> {
+export async function fetchNearbyRestaurants(
+  query: NearbyRestaurantQuery,
+  options: FetchNearbyRestaurantsOptions = {},
+): Promise<NearbyRestaurantResult> {
   const baseUrl = requireApiBaseUrl(
     options.baseUrl ?? process.env.EXPO_PUBLIC_API_BASE_URL,
   );
@@ -40,14 +38,10 @@ export async function fetchNearbyRestaurantPage(
   url.searchParams.set('lng', String(query.lng));
   url.searchParams.set('radius', String(query.radius));
 
-  if (query.pageToken) {
-    url.searchParams.set('pageToken', query.pageToken);
-  }
-
   const response = await (options.fetchImpl ?? fetch)(url.toString(), {
     signal: options.signal,
   });
-  const body = await response.json() as NearbyRestaurantPage & ApiErrorBody;
+  const body = await response.json() as NearbyRestaurantResult & ApiErrorBody;
 
   if (!response.ok) {
     const message = body.error?.message ?? 'Restaurant search failed';
@@ -60,8 +54,5 @@ export async function fetchNearbyRestaurantPage(
 
   return {
     restaurants: body.restaurants,
-    ...(typeof body.nextPageToken === 'string' && body.nextPageToken
-      ? { nextPageToken: body.nextPageToken }
-      : {}),
   };
 }
