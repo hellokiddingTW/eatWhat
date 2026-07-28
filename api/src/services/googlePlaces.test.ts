@@ -17,7 +17,6 @@ describe('Google Places restaurant search', () => {
       requestInit = init;
       return Response.json({
         places: [],
-        nextPageToken: 'next-page',
       });
     };
     const search = createGooglePlacesRestaurantSearch({
@@ -25,10 +24,7 @@ describe('Google Places restaurant search', () => {
       fetchImpl,
     });
 
-    const page = await search({
-      ...requestQuery,
-      pageToken: 'google-page-token',
-    });
+    const page = await search(requestQuery);
 
     assert.equal(
       requestUrl,
@@ -50,7 +46,6 @@ describe('Google Places restaurant search', () => {
         'places.googleMapsUri',
         'places.currentOpeningHours',
         'places.timeZone',
-        'nextPageToken',
       ].join(','),
     );
 
@@ -65,7 +60,6 @@ describe('Google Places restaurant search', () => {
         rankPreference: body.rankPreference,
         languageCode: body.languageCode,
         regionCode: body.regionCode,
-        pageToken: body.pageToken,
       },
       {
         textQuery: 'restaurants',
@@ -76,7 +70,6 @@ describe('Google Places restaurant search', () => {
         rankPreference: 'DISTANCE',
         languageCode: 'zh-TW',
         regionCode: 'TW',
-        pageToken: 'google-page-token',
       },
     );
 
@@ -89,7 +82,6 @@ describe('Google Places restaurant search', () => {
     assert.ok(Math.abs(rectangle.high.latitude - 25.05998) < 0.0001);
     assert.deepEqual(page, {
       restaurants: [],
-      nextPageToken: 'next-page',
     });
   });
 
@@ -102,6 +94,7 @@ describe('Google Places restaurant search', () => {
             displayName: { text: '較遠餐廳' },
             location: { latitude: 25.05, longitude: 121.565 },
             primaryTypeDisplayName: { text: '台灣餐廳' },
+            types: ['restaurant'],
             formattedAddress: '台北市較遠路 2 號',
             googleMapsUri: 'https://maps.google.com/farther',
             currentOpeningHours: {
@@ -117,13 +110,18 @@ describe('Google Places restaurant search', () => {
             id: 'outside',
             displayName: { text: '超出範圍' },
             location: { latitude: 25.08, longitude: 121.565 },
+            types: ['restaurant'],
             googleMapsUri: 'https://maps.google.com/outside',
+            currentOpeningHours: {
+              openNow: true,
+            },
           },
           {
             id: 'nearer',
             displayName: { text: '最近餐廳' },
             location: { latitude: 25.034, longitude: 121.565 },
             primaryType: 'restaurant',
+            types: ['restaurant'],
             currentOpeningHours: {
               openNow: true,
               nextCloseTime: '2026-07-27T15:00:00Z',
@@ -136,6 +134,10 @@ describe('Google Places restaurant search', () => {
             id: 'malformed',
             displayName: { text: '' },
             location: { latitude: 25.033, longitude: 121.565 },
+            types: ['restaurant'],
+            currentOpeningHours: {
+              openNow: true,
+            },
           },
         ],
       });
