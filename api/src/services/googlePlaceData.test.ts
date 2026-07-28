@@ -93,6 +93,33 @@ describe('Google Place normalization', () => {
     assert.deepEqual(restaurants, []);
   });
 
+  it('deduplicates one Google response by Place ID', () => {
+    const duplicate = {
+      id: 'same-place',
+      displayName: { text: 'Same Place' },
+      location: {
+        latitude: query.lat,
+        longitude: query.lng,
+      },
+      types: ['restaurant'],
+      currentOpeningHours: { openNow: true },
+    };
+
+    const restaurants = normalizeGooglePlaces(
+      [
+        duplicate,
+        {
+          ...duplicate,
+          displayName: { text: 'Duplicate Name' },
+        },
+      ],
+      query,
+    );
+
+    assert.equal(restaurants.length, 1);
+    assert.equal(restaurants[0]?.name, 'Same Place');
+  });
+
   it('deduplicates with primary precedence and sorts the merged result', () => {
     const primary = [
       {

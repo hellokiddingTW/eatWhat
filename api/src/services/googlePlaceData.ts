@@ -173,22 +173,10 @@ const normalizeGooglePlace = (
   };
 };
 
-export const normalizeGooglePlaces = (
-  places: GooglePlace[],
-  query: NearbyRestaurantQuery,
-) =>
-  places
-    .map((place) => normalizeGooglePlace(place, query))
-    .filter((restaurant): restaurant is Restaurant => Boolean(restaurant))
-    .sort((a, b) => a.distanceMeters - b.distanceMeters);
-
-export const mergeRestaurantResults = (
-  primary: Restaurant[],
-  fallback: Restaurant[],
-) => {
+const deduplicateAndSortRestaurants = (restaurants: Restaurant[]) => {
   const seenIds = new Set<string>();
 
-  return [...primary, ...fallback]
+  return restaurants
     .filter(({ id }) => {
       if (seenIds.has(id)) {
         return false;
@@ -199,3 +187,18 @@ export const mergeRestaurantResults = (
     })
     .sort((a, b) => a.distanceMeters - b.distanceMeters);
 };
+
+export const normalizeGooglePlaces = (
+  places: GooglePlace[],
+  query: NearbyRestaurantQuery,
+) =>
+  deduplicateAndSortRestaurants(
+    places
+      .map((place) => normalizeGooglePlace(place, query))
+      .filter((restaurant): restaurant is Restaurant => Boolean(restaurant)),
+  );
+
+export const mergeRestaurantResults = (
+  primary: Restaurant[],
+  fallback: Restaurant[],
+) => deduplicateAndSortRestaurants([...primary, ...fallback]);
