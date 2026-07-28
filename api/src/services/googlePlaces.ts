@@ -8,6 +8,8 @@ import {
   normalizeGooglePlaces,
   type GooglePlace,
 } from './googlePlaceData.js';
+import { createGoogleNearbyRestaurantSearch } from './googleNearbySearch.js';
+import { createRestaurantSearchWithFallback } from './restaurantSearchWithFallback.js';
 
 const GOOGLE_PLACES_TEXT_SEARCH_URL =
   'https://places.googleapis.com/v1/places:searchText';
@@ -17,10 +19,17 @@ type GoogleTextSearchResponse = {
   places?: GooglePlace[];
 };
 
-type GooglePlacesSearchOptions = {
+type GoogleTextSearchOptions = {
   apiKey?: string;
   fetchImpl?: typeof fetch;
   endpoint?: string;
+};
+
+type GooglePlacesSearchOptions = {
+  apiKey?: string;
+  fetchImpl?: typeof fetch;
+  nearbyEndpoint?: string;
+  textEndpoint?: string;
 };
 
 const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
@@ -55,11 +64,11 @@ const buildLocationRectangle = ({
   };
 };
 
-export const createGooglePlacesRestaurantSearch = ({
+export const createGoogleTextRestaurantSearch = ({
   apiKey,
   fetchImpl = fetch,
   endpoint = GOOGLE_PLACES_TEXT_SEARCH_URL,
-}: GooglePlacesSearchOptions): RestaurantSearch => {
+}: GoogleTextSearchOptions): RestaurantSearch => {
   return async (query, options): Promise<NearbyRestaurantPage> => {
     const trimmedApiKey = apiKey?.trim();
     if (!trimmedApiKey) {
@@ -99,3 +108,22 @@ export const createGooglePlacesRestaurantSearch = ({
     };
   };
 };
+
+export const createGooglePlacesRestaurantSearch = ({
+  apiKey,
+  fetchImpl = fetch,
+  nearbyEndpoint,
+  textEndpoint,
+}: GooglePlacesSearchOptions): RestaurantSearch =>
+  createRestaurantSearchWithFallback({
+    nearbySearch: createGoogleNearbyRestaurantSearch({
+      apiKey,
+      fetchImpl,
+      ...(nearbyEndpoint ? { endpoint: nearbyEndpoint } : {}),
+    }),
+    textSearch: createGoogleTextRestaurantSearch({
+      apiKey,
+      fetchImpl,
+      ...(textEndpoint ? { endpoint: textEndpoint } : {}),
+    }),
+  });

@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { createGooglePlacesRestaurantSearch } from './googlePlaces.js';
+import {
+  createGooglePlacesRestaurantSearch,
+  createGoogleTextRestaurantSearch,
+} from './googlePlaces.js';
 
 const requestQuery = {
   lat: 25.033,
@@ -19,7 +22,7 @@ describe('Google Places restaurant search', () => {
         places: [],
       });
     };
-    const search = createGooglePlacesRestaurantSearch({
+    const search = createGoogleTextRestaurantSearch({
       apiKey: 'server-key',
       fetchImpl,
     });
@@ -141,7 +144,7 @@ describe('Google Places restaurant search', () => {
           },
         ],
       });
-    const search = createGooglePlacesRestaurantSearch({
+    const search = createGoogleTextRestaurantSearch({
       apiKey: 'server-key',
       fetchImpl,
     });
@@ -193,7 +196,7 @@ describe('Google Places restaurant search', () => {
       body = JSON.parse(String(init?.body));
       return Response.json({ places: [] });
     };
-    const search = createGooglePlacesRestaurantSearch({
+    const search = createGoogleTextRestaurantSearch({
       apiKey: 'server-key',
       fetchImpl,
     });
@@ -209,7 +212,7 @@ describe('Google Places restaurant search', () => {
       receivedSignal = init?.signal;
       return Response.json({ places: [] });
     };
-    const search = createGooglePlacesRestaurantSearch({
+    const search = createGoogleTextRestaurantSearch({
       apiKey: 'server-key',
       fetchImpl,
     });
@@ -222,7 +225,7 @@ describe('Google Places restaurant search', () => {
 
   it('rejects a missing server API key without making a request', async () => {
     let requested = false;
-    const search = createGooglePlacesRestaurantSearch({
+    const search = createGoogleTextRestaurantSearch({
       apiKey: '   ',
       fetchImpl: async () => {
         requested = true;
@@ -235,7 +238,7 @@ describe('Google Places restaurant search', () => {
   });
 
   it('includes the upstream status when Google rejects the request', async () => {
-    const search = createGooglePlacesRestaurantSearch({
+    const search = createGoogleTextRestaurantSearch({
       apiKey: 'server-key',
       fetchImpl: async () =>
         Response.json(
@@ -249,5 +252,44 @@ describe('Google Places restaurant search', () => {
     });
 
     await assert.rejects(search(requestQuery), /Google Places request failed \(429\)/);
+  });
+
+  it('uses Nearby Search before one Text Search fallback', async () => {
+    const requestedPaths: string[] = [];
+    const fetchImpl: typeof fetch = async (input) => {
+      const path = new URL(String(input)).pathname;
+      requestedPaths.push(path);
+
+      if (path.endsWith('searchNearby')) {
+        return Response.json({
+          places: [
+            {
+              id: 'banxin-77',
+              displayName: { text: '板新77早午餐' },
+              location: {
+                latitude: requestQuery.lat,
+                longitude: requestQuery.lng,
+              },
+              types: ['brunch_restaurant', 'restaurant'],
+              currentOpeningHours: { openNow: true },
+            },
+          ],
+        });
+      }
+
+      return Response.json({ places: [] });
+    };
+    const search = createGooglePlacesRestaurantSearch({
+      apiKey: 'server-key',
+      fetchImpl,
+    });
+
+    const result = await search(requestQuery);
+
+    assert.deepEqual(requestedPaths, [
+      '/v1/places:searchNearby',
+      '/v1/places:searchText',
+    ]);
+    assert.equal(result.restaurants[0]?.id, 'banxin-77');
   });
 });
