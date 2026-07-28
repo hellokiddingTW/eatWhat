@@ -1,5 +1,5 @@
 import type {
-  NearbyRestaurantPage,
+  NearbyRestaurantResult,
   NearbyRestaurantQuery,
   RestaurantSearch,
 } from '../types/restaurant.js';
@@ -69,7 +69,7 @@ export const createGoogleTextRestaurantSearch = ({
   fetchImpl = fetch,
   endpoint = GOOGLE_PLACES_TEXT_SEARCH_URL,
 }: GoogleTextSearchOptions): RestaurantSearch => {
-  return async (query, options): Promise<NearbyRestaurantPage> => {
+  return async (query, options): Promise<NearbyRestaurantResult> => {
     const trimmedApiKey = apiKey?.trim();
     if (!trimmedApiKey) {
       throw new Error('GOOGLE_PLACES_API_KEY is required.');

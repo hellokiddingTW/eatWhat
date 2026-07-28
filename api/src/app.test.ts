@@ -35,7 +35,7 @@ describe('EatWhat API', () => {
     assert.deepEqual(body, { ok: true });
   });
 
-  it('forwards a valid nearby query and returns a restaurant page', async () => {
+  it('forwards a valid nearby query and returns one restaurant result', async () => {
     let receivedQuery: NearbyRestaurantQuery | undefined;
     let receivedSignal: AbortSignal | undefined;
     const app = createTestApp(async (query, options) => {
@@ -43,12 +43,11 @@ describe('EatWhat API', () => {
       receivedSignal = options?.signal;
       return {
         restaurants: [sampleRestaurant],
-        nextPageToken: 'next-page',
       };
     });
 
     const response = await app.request(
-      '/restaurants/nearby?lat=25.033&lng=121.565&radius=3000&pageToken=google-token',
+      '/restaurants/nearby?lat=25.033&lng=121.565&radius=3000',
     );
     const body = await response.json();
 
@@ -57,16 +56,15 @@ describe('EatWhat API', () => {
       lat: 25.033,
       lng: 121.565,
       radius: 3000,
-      pageToken: 'google-token',
     });
     assert.deepEqual(body, {
       restaurants: [sampleRestaurant],
-      nextPageToken: 'next-page',
     });
+    assert.equal(Object.hasOwn(body, 'nextPageToken'), false);
     assert.ok(receivedSignal instanceof AbortSignal);
   });
 
-  it('allows a first-page request without a page token', async () => {
+  it('forwards another supported radius without extra query data', async () => {
     let receivedQuery: NearbyRestaurantQuery | undefined;
     const app = createTestApp(async (query) => {
       receivedQuery = query;
@@ -122,24 +120,6 @@ describe('EatWhat API', () => {
     assert.deepEqual(body.error.details, [
       'lat must be between -90 and 90',
       'lng must be between -180 and 180',
-    ]);
-  });
-
-  it('rejects a blank or oversized page token', async () => {
-    const blankResponse = await createTestApp().request(
-      '/restaurants/nearby?lat=25.033&lng=121.565&radius=3000&pageToken=%20%20',
-    );
-    const oversizedResponse = await createTestApp().request(
-      `/restaurants/nearby?lat=25.033&lng=121.565&radius=3000&pageToken=${'a'.repeat(2049)}`,
-    );
-
-    assert.equal(blankResponse.status, 400);
-    assert.deepEqual((await blankResponse.json()).error.details, [
-      'pageToken must not be blank',
-    ]);
-    assert.equal(oversizedResponse.status, 400);
-    assert.deepEqual((await oversizedResponse.json()).error.details, [
-      'pageToken must be at most 2048 characters',
     ]);
   });
 

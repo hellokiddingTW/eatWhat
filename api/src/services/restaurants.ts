@@ -8,7 +8,6 @@ type RawNearbyQuery = {
   lat?: string;
   lng?: string;
   radius?: string;
-  pageToken?: string;
 };
 
 type ParseResult =
@@ -62,22 +61,11 @@ export function parseNearbyRestaurantQuery(rawQuery: RawNearbyQuery): ParseResul
 
   const parsedRadius = rawQuery.radius ? Number(rawQuery.radius) : 3000;
   let radius: SearchRadiusMeters | undefined;
-  let pageToken: string | undefined;
 
   if (!Number.isFinite(parsedRadius) || !isAllowedRadius(parsedRadius)) {
     details.push('radius must be one of 3000, 5000, 10000');
   } else {
     radius = parsedRadius;
-  }
-
-  if (rawQuery.pageToken !== undefined) {
-    if (!rawQuery.pageToken.trim()) {
-      details.push('pageToken must not be blank');
-    } else if (rawQuery.pageToken.length > 2048) {
-      details.push('pageToken must be at most 2048 characters');
-    } else {
-      pageToken = rawQuery.pageToken;
-    }
   }
 
   if (!lat.ok || !lng.ok || !radius || details.length > 0) {
@@ -90,7 +78,6 @@ export function parseNearbyRestaurantQuery(rawQuery: RawNearbyQuery): ParseResul
       lat: lat.value,
       lng: lng.value,
       radius,
-      ...(pageToken ? { pageToken } : {}),
     },
   };
 }
